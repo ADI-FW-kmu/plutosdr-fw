@@ -1,9 +1,13 @@
-# plutosdr-fw
+# KMU SDR ADALM Pluto firmware
+
+This repository contains the modified ADALM Pluto firmware for the KMU SDR project.
+See [analogdevicesinc/plutosdr-fw](https://github.com/analogdevicesinc/plutosdr-fw) for the default ADI firmware.
+
 PlutoSDR Firmware for the [ADALM-PLUTO](https://wiki.analog.com/university/tools/pluto "PlutoSDR Wiki Page") Active Learning Module
 
-Latest binary Release : [![GitHub Release](https://img.shields.io/github/release/analogdevicesinc/plutosdr-fw.svg)](https://github.com/analogdevicesinc/plutosdr-fw/releases/latest)  [![Github Releases](https://img.shields.io/github/downloads/analogdevicesinc/plutosdr-fw/total.svg)](https://github.com/analogdevicesinc/plutosdr-fw/releases/latest)
+Latest binary Release : 
 
-Firmware License : [![Many Licenses](https://img.shields.io/badge/license-LGPL2+-blue.svg)](https://github.com/analogdevicesinc/plutosdr-fw/blob/master/LICENSE.md)  [![Many License](https://img.shields.io/badge/license-GPL2+-blue.svg)](https://github.com/analogdevicesinc/plutosdr-fw/blob/master/LICENSE.md)  [![Many License](https://img.shields.io/badge/license-BSD-blue.svg)](https://github.com/analogdevicesinc/plutosdr-fw/blob/master/LICENSE.md)  [![Many License](https://img.shields.io/badge/license-apache-blue.svg)](https://github.com/analogdevicesinc/plutosdr-fw/blob/master/LICENSE.md) and many others.
+Firmware License : 
 
 [Instructions from the Wiki: Building the image](https://wiki.analog.com/university/tools/pluto/building_the_image)
 
@@ -18,76 +22,74 @@ Firmware License : [![Many Licenses](https://img.shields.io/badge/license-LGPL2+
  make
 
 ```
-
-Due to incompatibility between the AMD/Xilinx GCC toolchain supplied with Vivado/Vitis and Buildroot.
-This project switched to Buildroot external Toolchain: Linaro GCC 7.3-2018.05 7.3.1
+Vivado/Vitis와 Buildroot가 제공하는 AMD/Xilinx GCC 툴체인 간의 호환성 문제로 인해,
+이 프로젝트는 Buildroot 외부 툴체인으로 전환되었다. : Linaro GCC 7.3-2018.05 7.3.1
 
 https://releases.linaro.org/components/toolchain/binaries/7.3-2018.05/arm-linux-gnueabihf/
 
-This toolchain is used to build: Buildroot, Linux and u-boot
+해당 툴체인은 3가지로 빌드된다. : Buildroot, Linux, u-boot
+
+## WorkFlow
+
+### 1단계 : 전체 구조 생성
+
+KMU-SDR은 독자적인 방식(Amaranth, HLS, Rust 등)으로 ADI 하드웨어를 제어하기 위한 프로젝트이다.
+반면, 공식 ADI PlutoSDR 펌웨어는 다음과 같은 표준 구조를 따른다.
+
+1. Build System: Makefile과 서브모듈(linux, hdl, u-boot, buildroot)을 조율
+2. FGPA(HDL) : Xilinx Vivado( Verilog/VHDL + IP Integrator ) 사용
+3. Linux Kernel : ADI가 수정한 리눅스 커널(adi-linux) 사용
+4. User Space: 표준 리눅스 애플리케이션(C/C++, Python)과 libiio 라이브러리를 사용하여 하드웨어 제어
+
+### 2단계 : 서므모듈 구성
+
+1. 메인 펌웨어 저장소 Fork: 
+
+2. 핵심 서브모듈 Fork :
+
+- FPGA : https://github.com/analogdevicesinc/hdl (필수)
+
+- 커널 : https://github.com/analogdevicesinc/linux
+
+- 부트로더: https://github.com/analogdevicesinc/u-boot-xlnx
+
+### 3단계 : Prerequisites
+
+1. Vivado 설치
+
+2. 리눅스 빌드 패키지 설치 or Docker 활용 예정
 
 
-"error "timeout while establishing a connection with SDK""
-    (procedure "getsdkchan" line 108)
-    invoked from within
-"getsdkchan"
-    (procedure "createhw" line 26)
-    invoked from within
-"createhw {*}$args"
-    (procedure "::sdk::create_hw_project" line 3)
-    invoked from within
-"sdk create_hw_project -name hw_0 -hwspec build/system_top.hdf"
-    (file "scripts/create_fsbl_project.tcl" line 5)
-```
-you may be able to work around it by preventing eclipse from using GTK3 for the Standard Widget Toolkit (SWT). Prior to running make, also set the following environment variable: 
-```bash
-export SWT_GTK3=0
-```
-This problem seems to affect Ubuntu 16.04LTS only.
+### 4단계 : FPGA 개발
 
- * Updating your local repository 
- ```bash 
-      git pull
-      git submodule update --init --recursive
-  ```
-   
-* Build Artifacts
- ```bash
-      michael@HAL9000:~/devel/plutosdr-fw$ ls -AGhl build
-      total 543M
-      -rw-rw-r-- 1 michael   69 Mär  1 09:28 boot.bif
-      -rw-rw-r-- 1 michael 443K Mär  1 09:28 boot.bin
-      -rw-rw-r-- 1 michael 443K Mär  1 09:28 boot.dfu
-      -rw-rw-r-- 1 michael 572K Mär  1 09:28 boot.frm
-      -rw-rw-r-- 1 michael 475M Mär  1 09:28 legal-info-v0.36.tar.gz
-      -rw-rw-r-- 1 michael 617K Mär  1 09:25 LICENSE.html
-      -rw-rw-r-- 1 michael  11M Mär  1 09:27 pluto.dfu
-      -rw-rw-r-- 1 michael  11M Mär  1 09:28 pluto.frm
-      -rw-rw-r-- 1 michael   33 Mär  1 09:28 pluto.frm.md5
-      -rw-rw-r-- 1 michael  11M Mär  1 09:27 pluto.itb
-      -rw-rw-r-- 1 michael  20M Mär  1 09:28 plutosdr-fw-v0.36.zip
-      -rw-rw-r-- 1 michael 578K Mär  1 09:28 plutosdr-jtag-bootstrap-v0.36.zip
-      -rw-rw-r-- 1 michael 441K Mär  1 09:26 ps7_init.c
-      -rw-rw-r-- 1 michael 442K Mär  1 09:26 ps7_init_gpl.c
-      -rw-rw-r-- 1 michael 4,2K Mär  1 09:26 ps7_init_gpl.h
-      -rw-rw-r-- 1 michael 3,6K Mär  1 09:26 ps7_init.h
-      -rw-rw-r-- 1 michael 2,4M Mär  1 09:26 ps7_init.html
-      -rw-rw-r-- 1 michael  31K Mär  1 09:26 ps7_init.tcl
-      -rw-r--r-- 1 michael 5,3M Mär  1 09:25 rootfs.cpio.gz
-      drwxrwxr-x 6 michael 4,0K Mär  1 09:26 sdk
-      -rw-rw-r-- 1 michael 943K Mär  1 09:26 system_top.bit
-      -rw-rw-r-- 1 michael 716K Mär  1 09:26 system_top.xsa
-      -rwxrwxr-x 1 michael 761K Mär  1 09:28 u-boot.elf
-      -rw-rw---- 1 michael 128K Mär  1 09:28 uboot-env.bin
-      -rw-rw---- 1 michael 129K Mär  1 09:28 uboot-env.dfu
-      -rw-rw-r-- 1 michael 7,0K Mär  1 09:28 uboot-env.txt
-      -rwxrwxr-x 1 michael 4,1M Mär  1 09:24 zImage
-      -rw-rw-r-- 1 michael  22K Mär  1 09:26 zynq-pluto-sdr.dtb
-      -rw-rw-r-- 1 michael  22K Mär  1 09:26 zynq-pluto-sdr-revb.dtb
-      -rw-rw-r-- 1 michael  23K Mär  1 09:26 zynq-pluto-sdr-revc.dtb
+- 1안: PlutoSDR FPGA 프로젝트 메인에 작업
 
- ```
- 
+- 2안: HLS 기반 프로젝트...
+
+    system_top.xpr 생성과 system_top.bit와 system_top.xsa(하드웨어 핸드오프 파일) 생성 해야함
+    사용하는 메모리 주소를 커널 모듈과 디바이스 트리 파일에 인식 시키는 것(추후 세부사항 정리할 것)
+
+### 5단계 : SW 개발
+
+1. Buildroot 구성
+    - 새로운 프로그램(kmu_core.c)을 추가하려면 buildroot/package/ 안에 내 패키지를 등록하고 make menuconfig 에서 활성화 해야함
+
+2. 드라이버 개발(linux/):
+    - kmu-kmod와 같은 커널 모듈이 필요하면, linux/drivers/iio/... 경로에 직접 드라이버 코드를 추가하거나,
+    buildroot의 package 기능을 이용해 외부 모듈(out-of-tree module)로 빌드하게 설정
+
+3. 애플리케이션 제어:
+    - 하드웨어 제어는 Rust 기반 Server Daemon과 libiio 기반 제어 2가지를 염두 중.
+
+### 6단계 : 빌드
+
+- 하드웨어 정의를 .bd로 할 수 잇지만 maia 프로젝트의 경우 maia-sdr.svd 로 자동생성
+- 드라이버 커널 모듈 생성 시, mmap 기반 커스텀으로 가상 메모리를 활용하는 방법이 있었다.
+- Rust 기반 Rest API 구현
+- Makefile을 Custmomize 
+
+
+### 빌드 산출물 List 
  * Main targets
  
      | File  | Comment |
